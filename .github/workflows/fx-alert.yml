@@ -1,0 +1,49 @@
+name: FX alert
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fx-alert
+  cancel-in-progress: false
+
+jobs:
+  check-usdjpy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore alert state
+        uses: actions/cache/restore@v4
+        with:
+          path: .state
+          key: fx-state-${{ github.run_id }}
+          restore-keys: |
+            fx-state-
+
+      - name: Check USD/JPY and notify Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TARGET_HIGH: ${{ vars.TARGET_HIGH }}
+          TARGET_LOW: ${{ vars.TARGET_LOW }}
+          USD_AMOUNT: ${{ vars.USD_AMOUNT || '5000' }}
+          MOVE_15M_JPY: ${{ vars.MOVE_15M_JPY || '0.5' }}
+          MOVE_1H_JPY: ${{ vars.MOVE_1H_JPY || '0.8' }}
+          MOVE_DAILY_PCT: ${{ vars.MOVE_DAILY_PCT || '1.5' }}
+          COOLDOWN_MINUTES: ${{ vars.COOLDOWN_MINUTES || '60' }}
+          FORCE_NOTIFY: ${{ github.event_name == 'workflow_dispatch' }}
+        run: python3 fx_alert.py
+
+      - name: Save alert state
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .state
+          key: fx-state-${{ github.run_id }}
+
