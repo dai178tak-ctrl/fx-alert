@@ -74,9 +74,6 @@ def notify_discord(message: str) -> None:
                 f"Discord通知に失敗しました: HTTP {response.status}"
             )
 
-
-def main() -> int:
-
 def main() -> int:
     points = fetch_rates()
     now_ts, current = points[-1]
