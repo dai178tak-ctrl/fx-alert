@@ -49,24 +49,33 @@ def save_state(state: dict) -> None:
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
 
-
 def notify_discord(message: str) -> None:
     webhook = os.getenv("DISCORD_WEBHOOK_URL", "").strip()
     if not webhook:
         raise RuntimeError("DISCORD_WEBHOOK_URL が設定されていません")
-    body = json.dumps({"content": message}, ensure_ascii=False).encode("utf-8")
-request = urllib.request.Request(
-    webhook,
-    data=body,
-    headers={
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 fx-alert/1.1",
-    },
-)
-with urllib.request.urlopen(request, timeout=20) as response:
-        if response.status not in (200, 204):
-            raise RuntimeError(f"Discord通知に失敗しました: HTTP {response.status}")
 
+    body = json.dumps(
+        {"content": message},
+        ensure_ascii=False,
+    ).encode("utf-8")
+
+    request = urllib.request.Request(
+        webhook,
+        data=body,
+        headers={
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 fx-alert/1.1",
+        },
+    )
+
+    with urllib.request.urlopen(request, timeout=20) as response:
+        if response.status not in (200, 204):
+            raise RuntimeError(
+                f"Discord通知に失敗しました: HTTP {response.status}"
+            )
+
+
+def main() -> int:
 
 def main() -> int:
     points = fetch_rates()
