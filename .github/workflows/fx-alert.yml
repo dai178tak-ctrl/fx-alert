@@ -36,7 +36,7 @@ jobs:
           MOVE_15M_JPY: ${{ vars.MOVE_15M_JPY || '0.5' }}
           MOVE_1H_JPY: ${{ vars.MOVE_1H_JPY || '0.8' }}
           MOVE_DAILY_PCT: ${{ vars.MOVE_DAILY_PCT || '1.5' }}
-          COOLDOWN_MINUTES: ${{ vars.COOLDOWN_MINUTES || '60' }}
+          RENOTIFY_MOVE_JPY: ${{ vars.RENOTIFY_MOVE_JPY || '1.0' }}
           FORCE_NOTIFY: ${{ github.event_name == 'workflow_dispatch' }}
         run: python3 fx_alert.py
 
@@ -46,4 +46,3 @@ jobs:
         with:
           path: .state
           key: fx-state-${{ github.run_id }}
-
