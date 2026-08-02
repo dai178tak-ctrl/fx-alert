@@ -89,6 +89,18 @@ def notify_discord(message: str) -> None:
 def main() -> int:
     points = fetch_rates()
     now_ts, current = points[-1]
+    force = os.getenv("FORCE_NOTIFY", "false").lower() == "true"
+    max_data_age_minutes = env_float("MAX_DATA_AGE_MINUTES", 30.0) or 30.0
+    wall_clock_ts = int(datetime.now(timezone.utc).timestamp())
+    data_age_minutes = max(0.0, (wall_clock_ts - now_ts) / 60)
+    if not force and data_age_minutes > max_data_age_minutes:
+        observed = datetime.fromtimestamp(now_ts, JST).strftime("%Y-%m-%d %H:%M JST")
+        print(
+            f"古い為替データのため通知をスキップ: 観測時刻={observed}, "
+            f"経過={data_age_minutes:.0f}分"
+        )
+        return 0
+
     rate_15m = rate_at_or_before(points, now_ts - 15 * 60)
     rate_1h = rate_at_or_before(points, now_ts - 60 * 60)
     rate_24h = rate_at_or_before(points, now_ts - 24 * 60 * 60)
@@ -146,7 +158,6 @@ def main() -> int:
         trigger_moves.append(-1.0)
         target_crossed = True
 
-    force = os.getenv("FORCE_NOTIFY", "false").lower() == "true"
     primary_move = max(trigger_moves, key=abs) if trigger_moves else 0.0
     direction = "up" if primary_move >= 0 else "down"
     last_alert = state.get("last_alert", {})
